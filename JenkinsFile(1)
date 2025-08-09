@@ -97,7 +97,7 @@ pipeline {
                     sh """
                     # Replace placeholder with DB name in a temp SQL file
                     sed "s/__DB_NAME__/${DB_NAME}/g" mysql-init/init.sql > /tmp/init.sql
-                    mysql -u ${DB_USER} -p${DB_PASS} < mysql-init/init.sql
+                    mysql -u ${DB_USER} -p${DB_PASS} < /tmp/init.sql
                     """
                 }
             }
