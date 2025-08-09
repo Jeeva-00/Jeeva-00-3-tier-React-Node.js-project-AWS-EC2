@@ -13,7 +13,7 @@ pipeline {
         DB_PASS = 'jk'
         REACT_SERVER_IP = '13.233.127.57'     // The backend server IP for React .env
         REACT_SERVER_PORT = '5000'                 // The backend port for React .env
-        REPO_URL = 'https://github.com/Jeeva-00/jeeva-test-repo.git'
+        REPO_URL = 'https://github.com/Jeeva-00/Jeeva-00-3-tier-React-Node.js-project-AWS-EC2.git'
      
     }
 
