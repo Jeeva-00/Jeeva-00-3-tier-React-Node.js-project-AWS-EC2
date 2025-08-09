@@ -147,20 +147,32 @@ EOF
     steps {
         script {
             sh """
-            # Go to backend folder inside Jenkins workspace
             cd $BACKEND_DIR
 
             # Install dependencies
             npm install
 
-            # Stop old PM2 service if exists
+            # Check if port 5000 is in use and kill any process using it
+            if sudo lsof -i :5000 > /dev/null; then
+                echo "Port 5000 is in use, killing the process using it"
+                sudo fuser -k 5000/tcp
+                sleep 2
+            fi
+
+            # Stop old PM2 service if exists (ignore errors)
             sudo pm2 delete backend-api || true
+
+            # Wait a bit to ensure port is free
+            sleep 2
+
             # Start the backend with PM2
             sudo pm2 start app.js --name backend-api
+
             # Save PM2 process list so it restarts on reboot
             sudo pm2 save
-            # Enable PM2 to start on system boot
-            sudo /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u jenkins --hp /var/lib/jenkins
+
+            # Setup PM2 to launch on startup for user jenkins (only needed once per machine)
+            sudo /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u jenkins --hp /var/lib/jenkins || true
 
             """
         }
