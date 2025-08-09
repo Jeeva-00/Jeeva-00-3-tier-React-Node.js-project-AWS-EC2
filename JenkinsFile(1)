@@ -7,8 +7,7 @@ pipeline {
 
     // Define all your configurable environment variables here
     environment {
-        SERVER_USER = 'ubuntu'            // Update your server user here
-        SERVER_HOST = '3.108.60.134'             // Your server public/private IP address
+      
         APACHE_DIR = '/var/www/html'               // Apache's directory for frontend
         BACKEND_DIR = "${env.WORKSPACE}/api"           // Backend deployment directory on server
         WORKSPACE_DIR = "${env.WORKSPACE}"        // Workspace dir of jenkins
