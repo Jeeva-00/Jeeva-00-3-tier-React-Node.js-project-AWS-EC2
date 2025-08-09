@@ -1,0 +1,27 @@
+---
+- name: Install Apache2 on Jenkins/Ansible master server
+  hosts: localhost
+  connection: local
+  become: yes
+  tasks:
+    - name: Update apt packages
+      apt:
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Install apache2
+      apt:
+        name: apache2
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Configure sudoers for jenkins user
+      copy:
+        dest: /etc/sudoers.d/jenkins
+        content: |
+          jenkins ALL=(ALL) NOPASSWD: /usr/bin/env PATH=*, /usr/lib/node_modules/pm2/bin/pm2 startup systemd*
+          jenkins ALL=(ALL) NOPASSWD: /usr/bin/mysql
+          jenkins ALL=(ALL) NOPASSWD: ALL
+        owner: root
+        group: root
+        mode: '0440'
