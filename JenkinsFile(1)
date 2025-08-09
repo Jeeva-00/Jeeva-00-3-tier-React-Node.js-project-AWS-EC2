@@ -1,0 +1,175 @@
+pipeline {
+    agent any
+
+     tools {
+        nodejs "node22"   // Name must match what you set in Jenkins Tools
+     }
+
+    // Define all your configurable environment variables here
+    environment {
+        SERVER_USER = 'ubuntu'            // Update your server user here
+        SERVER_HOST = '3.108.60.134'             // Your server public/private IP address
+        APACHE_DIR = '/var/www/html'               // Apache's directory for frontend
+        BACKEND_DIR = "${env.WORKSPACE}/api"           // Backend deployment directory on server
+        WORKSPACE_DIR = "${env.WORKSPACE}"  
+        DB_NAME = 'jk_db'
+        DB_USER = 'root'
+        DB_PASS = 'Aditya'
+        REACT_SERVER_IP = '3.108.60.134'     // The backend server IP for React .env
+        REACT_SERVER_PORT = '5000'                 // The backend port for React .env
+     
+    }
+
+    stages {
+        stage('Check Node & npm from Plugin') {
+            steps {
+                sh """
+                echo '--- Node.js Version ---'
+                node -v
+                echo '--- npm Version ---'
+                npm -v
+                """
+            }
+        }
+
+        
+        stage('Checkout Code') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: 'main']],
+                    userRemoteConfigs: [[url: 'https://github.com/Jeeva-00/3-tier-React-Node.js-project-AWS-EC2-.git']]
+                ])
+            }
+        }
+ 
+        stage('Generate React .env File') {
+            steps {
+                dir('client') {
+                    // Dynamically create/update .env for React frontend
+                    sh """
+                    echo REACT_APP_API=${REACT_SERVER_IP}:${REACT_SERVER_PORT} > .env
+                    """
+                    echo '.env file generated for React build.'
+                }
+            }
+        }
+
+        stage('Generate Backend .env File') {
+            steps {
+                dir('api') {
+                    // Dynamically create/update .env for backend
+                    sh """
+                    echo DB_HOST=localhost > .env
+                    echo DB_USER=${DB_USER} >> .env
+                    echo DB_PASSWORD=${DB_PASS} >> .env
+                    echo DB_NAME=${DB_NAME} >> .env
+                    echo JWT_SECRET=devopsShackSuperSecretKey >> .env
+                    """
+                    echo '.env file generated for backend API.'
+                }
+            }
+        }
+
+        stage('Install Backend Dependencies') {
+            steps {
+                script {
+                    sh """
+                    cd api && npm install
+                    """
+                }
+            }
+        }
+
+        stage('Install Frontend Dependencies & Build') {
+            steps {
+                 script {
+                    sh """
+                    cd client && npm install
+                    CI=false npm run build        // Ignore ESLint warnings in CI mode for now
+                    """
+                }
+            }
+        }
+
+        stage('Apply MySQL Migrations') {
+            steps {
+                script {
+                    // Run all SQL statements from db/init.sql
+                    sh """
+                    # Replace placeholder with DB name in a temp SQL file
+                    sed "s/__DB_NAME__/${DB_NAME}/g" mysql-init/init.sql > /tmp/init.sql
+                    mysql -u ${DB_USER} -p${DB_PASS} < mysql-init/init.sql
+                    """
+                }
+            }
+        }
+
+        stage('Deploy Frontend to Apache2') {
+            steps {
+                script {
+                    sh """
+                    sudo cp -r client/build/* ${APACHE_DIR}/
+                    sudo chown -R www-data:www-data ${APACHE_DIR}
+                    sudo chmod -R 755 ${APACHE_DIR}
+                    """
+                }
+            }
+        }
+
+
+        stage('Deploy Apache Config') {
+            steps {
+                sh '''
+                # Copy config from repo to Apache config location
+                cd $WORKSPACE_DIR
+                sudo cp -r myapp.conf /etc/apache2/sites-available
+                
+                sudo a2enmod proxy proxy_http
+                sudo a2ensite myapp.conf
+                sudo systemctl reload apache2
+                sudo a2dissite 000-default.conf
+                '''
+            }
+        }
+
+
+
+        stage('Deploy Backend API') {
+    steps {
+        script {
+            sh """
+            # Go to backend folder inside Jenkins workspace
+            cd $BACKEND_DIR
+
+            # Install dependencies
+            npm install
+
+            # Stop old PM2 service if exists
+            pm2 delete backend-api || true
+            # Start the backend with PM2
+            pm2 start app.js --name backend-api
+            # Save PM2 process list so it restarts on reboot
+            pm2 save
+            # Enable PM2 to start on system boot
+            sudo /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u jenkins --hp /var/lib/jenkins
+
+            """
+        }
+    }
+}
+    
+
+
+
+}
+
+    post {
+        success {
+            echo "🎉 Deployment completed successfully!"
+        }
+        failure {
+            echo "⚠️ Deployment failed. Check the logs for details."
+        }
+    }
+}
