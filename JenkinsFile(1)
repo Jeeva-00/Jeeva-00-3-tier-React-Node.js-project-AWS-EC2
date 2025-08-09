@@ -11,12 +11,13 @@ pipeline {
         SERVER_HOST = '3.108.60.134'             // Your server public/private IP address
         APACHE_DIR = '/var/www/html'               // Apache's directory for frontend
         BACKEND_DIR = "${env.WORKSPACE}/api"           // Backend deployment directory on server
-        WORKSPACE_DIR = "${env.WORKSPACE}"  
+        WORKSPACE_DIR = "${env.WORKSPACE}"        // Workspace dir of jenkins
         DB_NAME = 'jk_db'
-        DB_USER = 'root'
-        DB_PASS = 'Aditya'
-        REACT_SERVER_IP = '3.108.60.134'     // The backend server IP for React .env
+        DB_USER = 'jk-root'
+        DB_PASS = 'jk'
+        REACT_SERVER_IP = '13.233.127.57'     // The backend server IP for React .env
         REACT_SERVER_PORT = '5000'                 // The backend port for React .env
+        REPO_URL = ''
      
     }
 
@@ -38,7 +39,7 @@ pipeline {
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: 'main']],
-                    userRemoteConfigs: [[url: 'https://github.com/Jeeva-00/3-tier-React-Node.js-project-AWS-EC2-.git']]
+                    userRemoteConfigs: [[url: env.REPO_URL]]
                 ])
             }
         }
