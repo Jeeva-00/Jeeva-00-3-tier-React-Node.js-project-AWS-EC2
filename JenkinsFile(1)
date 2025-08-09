@@ -94,8 +94,12 @@ pipeline {
     steps {
         script {
             sh """
-            sed "s/__DB_NAME__/${DB_NAME}/g" mysql-init/init.sql > /tmp/init.sql
-            mysql -u ${DB_USER} -p${DB_PASS} < /tmp/init.sql
+            sed "s/__DB_NAME__/${DB_NAME}/g" mysql-init/init.sql > ${WORKSPACE}/init.sql
+            
+            echo "Showing generated SQL file:"
+            cat ${WORKSPACE}/init.sql
+            
+            mysql -u ${DB_USER} -p${DB_PASS} < ${WORKSPACE}/init.sql
 
             mysql -u root <<EOF
 GRANT ALL PRIVILEGES ON `${DB_NAME}`.* TO '${DB_USER}'@'localhost';
