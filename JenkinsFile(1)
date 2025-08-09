@@ -83,6 +83,7 @@ pipeline {
                  script {
                     sh """
                     cd client && npm install
+                    npm install react-icons
                     CI=false npm run build        // Ignore ESLint warnings in CI mode for now
                     """
                 }
