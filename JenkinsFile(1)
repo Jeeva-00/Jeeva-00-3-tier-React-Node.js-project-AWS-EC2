@@ -91,23 +91,21 @@ pipeline {
         }
 
         stage('Apply MySQL Migrations') {
-            steps {
-                script {
-                    // Run all SQL statements from db/init.sql
-                    sh """
-                    # Replace placeholder with DB name in a temp SQL file
-                    sed "s/__DB_NAME__/${DB_NAME}/g" mysql-init/init.sql > /tmp/init.sql
-                    mysql -u ${DB_USER} -p${DB_PASS} < /tmp/init.sql
-                    
-                    # Grant privileges as root user (needs root permission)
-                    mysql -u root <<EOF
-                GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';
-                FLUSH PRIVILEGES;
-                EOF
-                    """
-                }
-            }
+    steps {
+        script {
+            sh """
+            sed "s/__DB_NAME__/${DB_NAME}/g" mysql-init/init.sql > /tmp/init.sql
+            mysql -u ${DB_USER} -p${DB_PASS} < /tmp/init.sql
+
+            mysql -u root <<EOF
+GRANT ALL PRIVILEGES ON `${DB_NAME}`.* TO '${DB_USER}'@'localhost';
+FLUSH PRIVILEGES;
+EOF
+            """
         }
+    }
+}
+
 
         stage('Deploy Frontend to Apache2') {
             steps {
