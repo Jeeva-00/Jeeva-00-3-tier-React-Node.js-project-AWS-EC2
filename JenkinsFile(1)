@@ -1,9 +1,6 @@
 pipeline {
     agent any
 
-     tools {
-        nodejs "node22"   // Name must match what you set in Jenkins Tools
-     }
 
     // Define all your configurable environment variables here
     environment {
