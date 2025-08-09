@@ -102,6 +102,7 @@ pipeline {
             mysql -u ${DB_USER} -p${DB_PASS} < ${WORKSPACE}/init.sql
 
             mysql -u root <<EOF
+ALTER USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';
 GRANT ALL PRIVILEGES ON `${DB_NAME}`.* TO '${DB_USER}'@'localhost';
 FLUSH PRIVILEGES;
 EOF
